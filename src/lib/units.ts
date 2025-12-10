@@ -1,0 +1,31 @@
+export const UNITS = [
+	"count",
+	"oz",
+	"lb",
+	"g",
+	"kg",
+	"cup",
+	"tbsp",
+	"tsp",
+	"fl oz",
+	"ml",
+	"l",
+	"pt",
+	"qt",
+	"gal",
+	"pinch",
+	"dash",
+	"handful",
+	"bunch",
+	"head",
+	"clove",
+	"slice",
+	"piece",
+	"can",
+	"package",
+	"box",
+	"bag",
+] as const;
+
+export type Unit = (typeof UNITS)[number];
+
