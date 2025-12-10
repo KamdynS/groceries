@@ -12,7 +12,14 @@ export async function GET(req: NextRequest) {
 			.eq("user_id", user.id)
 			.order("created_at", { ascending: false });
 		if (error) throw error;
-		return NextResponse.json({ lists: data ?? [] });
+		return NextResponse.json(
+			{ lists: data ?? [] },
+			{
+				headers: {
+					"Cache-Control": "private, no-cache, no-store, must-revalidate",
+				},
+			}
+		);
 	} catch (err: any) {
 		const status = err?.status === 429 ? 429 : err?.message === "UNAUTHORIZED" ? 401 : 500;
 		return NextResponse.json({ error: err?.message ?? "Server error" }, { status });

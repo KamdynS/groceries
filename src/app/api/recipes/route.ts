@@ -5,11 +5,17 @@ import { rateLimitOrThrow } from "@/lib/rateLimit";
 export async function GET(req: NextRequest) {
 	try {
 		await rateLimitOrThrow(req, "recipes-get");
-		await requireUser(); // require auth even though recipes are global
 		const { supabase } = await requireUser();
 		const { data, error } = await supabase.from("recipes").select("*").order("created_at", { ascending: false });
 		if (error) throw error;
-		return NextResponse.json({ recipes: data ?? [] });
+		return NextResponse.json(
+			{ recipes: data ?? [] },
+			{
+				headers: {
+					"Cache-Control": "private, max-age=10, stale-while-revalidate=60",
+				},
+			}
+		);
 	} catch (err: any) {
 		const status = err?.status === 429 ? 429 : err?.message === "UNAUTHORIZED" ? 401 : 500;
 		return NextResponse.json({ error: err?.message ?? "Server error" }, { status });

@@ -344,6 +344,64 @@ Located in `/api/cook/route.ts`:
 - **Async/await**: All database operations are async
 - **Next.js 15**: Uses async `cookies()` API (must be awaited)
 
+## Performance Best Practices
+
+**ALWAYS follow these patterns for optimal performance:**
+
+### 1. Server Components First
+- **Pages should be Server Components by default** - Fetch data directly in the page component using `async/await`
+- **Extract interactivity to Client Components** - Only use `"use client"` for components that need interactivity (forms, buttons, state)
+- **Never use `useEffect` for initial data fetching** - Fetch data in Server Components instead
+
+### 2. Parallel Data Fetching
+- **Use `Promise.all()`** when fetching multiple independent data sources
+- **Example**:
+```typescript
+const [listsResult, recipesResult] = await Promise.all([
+  supabase.from("grocery_lists").select("*"),
+  supabase.from("recipes").select("*"),
+]);
+```
+
+### 3. Caching Strategy
+- **API routes**: Add appropriate cache headers
+  - User-specific data: `Cache-Control: private, no-cache, no-store, must-revalidate`
+  - Public/shared data: `Cache-Control: private, max-age=10, stale-while-revalidate=60`
+- **Server Components**: Data is automatically cached by Next.js
+
+### 4. Component Structure
+- **Shared components**: Extract common UI (like Navigation) to shared components
+- **Client components**: Keep client components small and focused on interactivity
+- **State sync**: Use `useEffect` to sync client state with server props when needed
+
+### 5. Navigation & Routing
+- **Use `router.refresh()`** after mutations to refresh Server Component data
+- **Avoid full page reloads** - Use Next.js navigation patterns
+
+### Example Pattern
+
+**❌ Bad (Client-side fetching):**
+```typescript
+"use client";
+export default function Page() {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    fetch("/api/data").then(r => r.json()).then(setData);
+  }, []);
+  // ...
+}
+```
+
+**✅ Good (Server Component):**
+```typescript
+export default async function Page() {
+  const { supabase } = await requireUser();
+  const { data } = await supabase.from("table").select("*");
+  
+  return <ClientComponent initialData={data} />;
+}
+```
+
 ## Future Enhancements (Not Implemented)
 
 - Meal history tracking

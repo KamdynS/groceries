@@ -1,0 +1,79 @@
+# Next.js Performance Rules
+
+## Server Components First
+- Pages MUST be Server Components by default (no "use client" on page files)
+- Fetch data directly in Server Components using async/await with Supabase
+- Only use "use client" for components that need interactivity (forms, buttons, state management)
+- NEVER use useEffect for initial data fetching - fetch in Server Components instead
+
+## Data Fetching Patterns
+- Use Promise.all() when fetching multiple independent data sources in parallel
+- Fetch data directly from Supabase in Server Components, not via API routes
+- Only use API routes for mutations (POST, PATCH, DELETE) or when you need rate limiting
+
+## Component Structure
+- Extract interactive parts into separate Client Components
+- Pass initial data as props from Server Components to Client Components
+- Use useEffect to sync client state with server props when props change
+- Create shared components (like Navigation) to avoid duplication
+
+## Caching
+- Add cache headers to API routes:
+  - User-specific data: "Cache-Control: private, no-cache, no-store, must-revalidate"
+  - Public/shared data: "Cache-Control: private, max-age=10, stale-while-revalidate=60"
+- Server Components are automatically cached by Next.js
+
+## Navigation & State Updates
+- Use router.refresh() after mutations to refresh Server Component data
+- Avoid full page reloads - use Next.js navigation patterns
+- Keep client components small and focused on interactivity only
+
+## Code Examples
+
+### ✅ Correct Pattern
+```typescript
+// page.tsx - Server Component
+import { requireUser } from "@/lib/supabase/server";
+import { ClientComponent } from "./components/ClientComponent";
+
+export default async function Page() {
+  const { supabase } = await requireUser();
+  const [data1, data2] = await Promise.all([
+    supabase.from("table1").select("*"),
+    supabase.from("table2").select("*"),
+  ]);
+  
+  return <ClientComponent initialData1={data1.data} initialData2={data2.data} />;
+}
+```
+
+```typescript
+// components/ClientComponent.tsx - Client Component
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
+export function ClientComponent({ initialData1, initialData2 }) {
+  const router = useRouter();
+  const [data1, setData1] = useState(initialData1);
+  
+  useEffect(() => {
+    setData1(initialData1);
+  }, [initialData1]);
+  
+  async function handleMutation() {
+    await fetch("/api/endpoint", { method: "POST" });
+    router.refresh(); // Refresh Server Component data
+  }
+  
+  return <div>{/* interactive UI */}</div>;
+}
+```
+
+### ❌ Anti-Patterns to Avoid
+- Don't use "use client" on page files
+- Don't use useEffect for initial data fetching
+- Don't fetch data client-side when it can be fetched server-side
+- Don't create API routes just to fetch data - fetch directly in Server Components
+- Don't duplicate navigation/components across pages
+
