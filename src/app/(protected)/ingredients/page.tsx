@@ -127,17 +127,9 @@ export default function IngredientsPage() {
 	}
 
 	async function handleDeleteIngredient(name: string) {
-		console.log("handleDeleteIngredient called with:", name);
-		if (!confirm(`Delete ingredient "${name}"? This will also delete all its standard alternatives.`)) {
-			console.log("User cancelled delete");
-			return;
-		}
-		console.log("Making DELETE request for:", name);
+		if (!confirm(`Delete ingredient "${name}"? This will also delete all its standard alternatives.`)) return;
 		try {
-			const url = `/api/ingredient-names/${encodeURIComponent(name)}`;
-			console.log("DELETE URL:", url);
-			const res = await fetch(url, { method: "DELETE" });
-			console.log("Response status:", res.status);
+			const res = await fetch(`/api/ingredient-names/${encodeURIComponent(name)}`, { method: "DELETE" });
 			if (res.ok) {
 				if (selectedIngredient === name) {
 					setSelectedIngredient(null);
@@ -145,11 +137,9 @@ export default function IngredientsPage() {
 				await loadIngredients();
 			} else {
 				const data = await res.json();
-				console.error("Delete error:", data);
 				alert(`Error: ${data.error || "Failed to delete ingredient"}`);
 			}
 		} catch (err) {
-			console.error("Delete exception:", err);
 			alert("Failed to delete ingredient");
 		}
 	}
@@ -343,7 +333,6 @@ export default function IngredientsPage() {
 										<button
 											type="button"
 											onClick={(e) => {
-												console.log("Delete button clicked for:", ing);
 												e.preventDefault();
 												e.stopPropagation();
 												handleDeleteIngredient(ing);

@@ -9,7 +9,6 @@ const limiter = new RateLimiterMemory({
 function getIp(req: NextRequest): string {
 	const fwd = req.headers.get("x-forwarded-for");
 	if (fwd) return fwd.split(",")[0]?.trim() || "unknown";
-	// @ts-expect-error: platform specific
 	return (req as any).ip || "unknown";
 }
 
